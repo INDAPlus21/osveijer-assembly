@@ -1,0 +1,16 @@
+steering
+overtake P2 P1 0
+overtake P0 P1 0
+pitstop P3 P3 0
+sidebysideintot1 P1 P1 0
+understeer P1 P0 1
+sidebysideintot1 P1 P1 0
+oversteer P3 P2 0
+sidebysideintot1 P1 P1 0
+divebomb -6
+overtake P1 P0 1
+overtake P2 P3 0
+sidebysideintot1 P1 P1 1
+divebomb -12
+overtake P1 P2 0
+radiomessage
