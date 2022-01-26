@@ -2,20 +2,19 @@ use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
 
+const RTYPE_INST: [&str; 5] = ["understeer", "oversteer", "overtake", "sidebysideintot1","pitstop"];
+const JTYPE_INST: [&str; 1] = ["divebomb"];
+const STYPE_INST: [&str; 2] = ["radiomessage","steering"];
 
 fn main() {
     let mut registers: [i32; 4] = [0; 4];
-    let rtype_inst: Vec<&str> = vec!["understeer", "oversteer", "overtake", "sidebysideintot1","pitstop"];
-    let jtype_inst: Vec<&str> = vec!["divebomb"];
-    let stype_inst: Vec<&str> = vec!["radiomessage","steering"];
-
-    let insts: [Vec<&str>; 3] = [rtype_inst, jtype_inst, stype_inst];
+    
 
     let lines: Vec<String> = read_lines(Path::new("./fac.formula1"));
 
     let mut line: usize = 0;
     while line < lines.len() {
-        check_syntax(&lines[line], &insts, line);
+        check_syntax(&lines[line], line);
         let curr_inst: Vec<&str> = lines[line].split_whitespace().collect();
         let inst = curr_inst[0];
 
@@ -84,11 +83,11 @@ fn parse_r_type(_inst: Vec<&str>) -> [usize; 3] {
     ret
 }
 
-fn check_syntax(_code: &String, _insts: &[Vec<&str>; 3], _line: usize) {
+fn check_syntax(_code: &String, _line: usize) {
     let mut errors: usize = 0;
     let elements: Vec<&str> = _code.split_whitespace().collect();
     // check if r-type instruction
-    if _insts[0].iter().any(|i| *i == elements[0]) {
+    if RTYPE_INST.iter().any(|i| *i == elements[0]) {
         // check if correct length of instruction
         if elements.len() == 4 {
             // check if registers are correct
@@ -114,7 +113,7 @@ fn check_syntax(_code: &String, _insts: &[Vec<&str>; 3], _line: usize) {
         }
     }
     // check if j-type instruction
-    else if _insts[1].iter().any(|i| *i == elements[0]) {
+    else if JTYPE_INST.iter().any(|i| *i == elements[0]) {
         // check if correct length of instruction
         if elements.len() != 2 {
             println!("\tError on line {}: Incorrect instruction of length {}", _line, elements.len());
@@ -127,7 +126,7 @@ fn check_syntax(_code: &String, _insts: &[Vec<&str>; 3], _line: usize) {
         }
     }
     // check if s-type instruction
-    else if _insts[2].iter().any(|i| *i == elements[0]) {
+    else if STYPE_INST.iter().any(|i| *i == elements[0]) {
         // check if correct length of instruction
         if elements.len() != 1 {
             println!("\tError on line {}: Incorrect instruction of length {}", _line, elements.len());
