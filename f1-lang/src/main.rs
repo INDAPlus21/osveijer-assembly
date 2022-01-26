@@ -5,19 +5,17 @@ use std::path::Path;
 
 fn main() {
     let mut registers: [i32; 4] = [0; 4];
-    let rtype_inst: [&str; 5] = ["understeer", "oversteer", "overtake", "sidebysideintot1","pitstop"];
-    let jtype_inst: [&str; 5] = ["divebomb"; 5];
-    let stype_inst: [&str; 5] = ["radiomessage","radiomessage","steering","steering","steering"];
+    let rtype_inst: Vec<&str> = vec!["understeer", "oversteer", "overtake", "sidebysideintot1","pitstop"];
+    let jtype_inst: Vec<&str> = vec!["divebomb"];
+    let stype_inst: Vec<&str> = vec!["radiomessage","steering"];
 
-    let insts = [rtype_inst, jtype_inst, stype_inst];
+    let insts: [Vec<&str>; 3] = [rtype_inst, jtype_inst, stype_inst];
 
-    let path = Path::new("./fac.formula1");
-    let lines = read_lines(path);
-
-    check_syntax(&lines, insts);
+    let lines: Vec<String> = read_lines(Path::new("./fac.formula1"));
 
     let mut line: usize = 0;
     while line < lines.len() {
+        check_syntax(&lines[line], &insts, line);
         let curr_inst: Vec<&str> = lines[line].split_whitespace().collect();
         let inst = curr_inst[0];
 
@@ -86,53 +84,61 @@ fn parse_r_type(_inst: Vec<&str>) -> [usize; 3] {
     ret
 }
 
-fn check_syntax(_code: &Vec<String>, _insts: [[&str; 5]; 3]) {
+fn check_syntax(_code: &String, _insts: &[Vec<&str>; 3], _line: usize) {
     let mut errors: usize = 0;
-    for line in _code {
-        let elements: Vec<&str> = line.split_whitespace().collect();
-        if _insts[0].iter().any(|i| *i == elements[0]) {
-            if elements.len() == 4 {
-                for i in [1 as usize,2 as usize] {
-                    let cs: Vec<char> = elements[i].chars().collect();
-                    if cs[0 as usize] != 'P' {
-                        println!("\tError on line {}: Missing P to mark registry", _code.iter().position(|l| l == line).unwrap());
-                        errors += 1;
-                    }
-                    if !['0','1','2','3'].iter().any(|c| *c == cs[1 as usize]) {
-                        println!("\tError on line {}: There are only 4 registers, P0, P1, P2 and P3", _code.iter().position(|l| l == line).unwrap());
-                        errors += 1;
-                    }
+    let elements: Vec<&str> = _code.split_whitespace().collect();
+    // check if r-type instruction
+    if _insts[0].iter().any(|i| *i == elements[0]) {
+        // check if correct length of instruction
+        if elements.len() == 4 {
+            // check if registers are correct
+            for i in [1 as usize,2 as usize] {
+                let cs: Vec<char> = elements[i].chars().collect();
+                if cs[0 as usize] != 'P' {
+                    println!("\tError on line {}: Missing P to mark registry", _line);
+                    errors += 1;
                 }
-                if elements[3] != "0" && elements[3] != "1" {
-                    println!("\tError on line {}: invalid immidiate. Can only be a 1 bit value", _code.iter().position(|l| l == line).unwrap());
+                if !['0','1','2','3'].iter().any(|c| *c == cs[1 as usize]) {
+                    println!("\tError on line {}: There are only 4 registers, P0, P1, P2 and P3", _line);
+                    errors += 1;
                 }
             }
-            else {
-                println!("\tError on line {}: Incorrect instruction of length {}", _code.iter().position(|l| l == line).unwrap(), elements.len());
-                errors += 1;
-            }
-        }
-        else if _insts[1].iter().any(|i| *i == elements[0]) {
-            if elements.len() != 2 {
-                println!("\tError on line {}: Incorrect instruction of length {}", _code.iter().position(|l| l == line).unwrap(), elements.len());
-                errors += 1;
-            }
-            if elements[1].parse::<i8>().unwrap() > 15 || elements[1].parse::<i8>().unwrap() < -16 {
-                println!("\tError on line {}: {} does not fit in a 5 bit signed value", _code.iter().position(|l| l == line).unwrap(), elements[1].parse::<i8>().unwrap());
-                errors += 1;
-            }
-        }
-        else if _insts[2].iter().any(|i| *i == elements[0]) {
-            if elements.len() != 1 {
-                println!("\tError on line {}: Incorrect instruction of length {}", _code.iter().position(|l| l == line).unwrap(), elements.len());
-                errors += 1;
+            // check if immidiate is within specification
+            if elements[3] != "0" && elements[3] != "1" {
+                println!("\tError on line {}: invalid immidiate. Can only be a 1 bit value", _line);
             }
         }
         else {
-            println!("\tError on line {}: {} is not an existing instruction in this language", _code.iter().position(|l| l == line).unwrap(), elements[0]);
-            errors += 1; 
+            println!("\tError on line {}: Incorrect instruction of length {}", _line, elements.len());
+            errors += 1;
         }
     }
+    // check if j-type instruction
+    else if _insts[1].iter().any(|i| *i == elements[0]) {
+        // check if correct length of instruction
+        if elements.len() != 2 {
+            println!("\tError on line {}: Incorrect instruction of length {}", _line, elements.len());
+            errors += 1;
+        }
+        // check if immidiate is within specification
+        if elements[1].parse::<i8>().unwrap() > 15 || elements[1].parse::<i8>().unwrap() < -16 {
+            println!("\tError on line {}: {} does not fit in a 5 bit signed value", _line, elements[1].parse::<isize>().unwrap());
+            errors += 1;
+        }
+    }
+    // check if s-type instruction
+    else if _insts[2].iter().any(|i| *i == elements[0]) {
+        // check if correct length of instruction
+        if elements.len() != 1 {
+            println!("\tError on line {}: Incorrect instruction of length {}", _line, elements.len());
+            errors += 1;
+        }
+    }
+    else {
+        println!("\tError on line {}: {} is not an existing instruction in this language", _line, elements[0]);
+        errors += 1; 
+    }
+
     
     if errors > 0 {
         println!("\tCode has {} syntax errors. Unable to run.", errors);
@@ -140,16 +146,21 @@ fn check_syntax(_code: &Vec<String>, _insts: [[&str; 5]; 3]) {
     }
 }
 
+
 fn read_lines(_p: &Path) -> Vec<String> {
-    let mut lines: Vec<String> = Vec::new();
+    let lines: Vec<String>;
 
     match File::open(_p) {
         Ok(f) => {
-            lines = io::BufReader::new(f).lines().map(|l| l.ok().unwrap()).collect()
+            lines = io::BufReader::new(f).lines().map(|l| l.ok().unwrap()).collect();
         
         },
-        _ => {}
+        _ => {
+            println!("Unable to read file");
+            std::process::exit(1);
+        }
     };
 
     lines
 }
+
